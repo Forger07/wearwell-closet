@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Wearwell Closet</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap');
+		:root { --ink:#25231f; --muted:#8b8175; --paper:#f4f1eb; --card:#faf8f4; --line:#ddd5ca; --lime:#c8a36a; --coral:#b99a72; --teal:#756a5d; --dark:#1d1c1a; --shadow:0 20px 60px rgba(67,53,39,.08); }
+		* { box-sizing:border-box; }
+		body { margin:0; color:var(--ink); background:var(--paper); font-family:'DM Sans',Arial,sans-serif; letter-spacing:0; }
+		body::after { content:''; position:fixed; inset:0; pointer-events:none; opacity:.22; background-image:linear-gradient(rgba(98,79,56,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(98,79,56,.025) 1px,transparent 1px); background-size:42px 42px; mask-image:linear-gradient(to bottom,black,transparent 80%); }
+		#authScreen { min-height:100vh; display:grid; place-items:center; padding:24px; background:linear-gradient(120deg,rgba(221,213,202,.7),transparent 50%),var(--paper); }
+		.auth-card { width:min(450px,100%); padding:42px; background:var(--card); border:1px solid var(--line); border-radius:2px; box-shadow:var(--shadow); animation:card-in .5s both; }
+		.auth-card h1 { font:500 43px/1 'Playfair Display',Georgia,serif; letter-spacing:-1px; margin:0 0 12px; }
+		.auth-card p { color:var(--muted); font:13px/1.5 Arial,sans-serif; }
+		.auth-card input { display:block; width:100%; margin:10px 0; padding:13px; border:1px solid var(--line); border-radius:0; background:#fff; font:13px 'DM Sans',Arial,sans-serif; }
+		.auth-actions { display:grid; gap:10px; margin-top:15px; }
+		.auth-error { min-height:18px; color:#b42318; font:12px Arial,sans-serif; }
+		.auth-error.success { color:var(--teal); }
+		.auth-switch { border:0; background:transparent; color:var(--teal); font:bold 12px Arial,sans-serif; }
+		#detailsScreen { min-height:100vh; display:none; place-items:center; padding:24px; background:linear-gradient(120deg,#e9e1d6,#f4f1eb 55%); }
+		.details-card { width:min(700px,100%); display:grid; grid-template-columns:.9fr 1.1fr; gap:34px; padding:34px; background:var(--card); border:1px solid var(--line); border-radius:2px; box-shadow:var(--shadow); animation:card-in .5s both; }
+		.details-art { min-height:310px; display:flex; align-items:flex-end; padding:24px; color:#fff; background:linear-gradient(145deg,rgba(24,33,31,.12),rgba(24,33,31,.78)),url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=700&q=80') center/cover; border-radius:6px; }
+		.details-art h2 { font-size:34px; line-height:.95; letter-spacing:-2px; }
+		.details-card h1 { font:500 40px/1 'Playfair Display',Georgia,serif; letter-spacing:-1px; margin:0 0 10px; }
+		.details-card p { color:var(--muted); font:13px/1.5 Arial,sans-serif; }
+		.details-card label { display:block; margin-top:16px; color:var(--muted); font:bold 11px Arial,sans-serif; letter-spacing:1px; text-transform:uppercase; }
+		.details-card input, .details-card select { width:100%; margin-top:7px; padding:12px; border:1px solid var(--line); border-radius:4px; background:#fff; font:14px Arial,sans-serif; }
+		.details-card .button { margin-top:20px; width:100%; }
+		.details-card .button:disabled { opacity:.65; cursor:wait; }
+		.app { display:none; }
+		.app.authenticated { display:block; }
+		.app.authenticated { display:block; max-width:1240px; padding:34px 42px 80px; }
+		.account { display:flex; align-items:center; gap:8px; font:12px Arial,sans-serif; color:var(--muted); }
+		body::before { content:''; position:fixed; inset:0 0 auto; height:3px; width:var(--scroll-progress, 0%); background:var(--coral); z-index:20; transition:width .12s ease; }
+		button, input, select { font:inherit; }
+		button { cursor:pointer; }
+		.app { max-width:1220px; margin:auto; padding:28px 28px 60px; }
+		.topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:74px; border-bottom:1px solid var(--line); padding-bottom:16px; }
+		.brand { display:flex; align-items:center; gap:12px; font:600 20px 'DM Sans',Arial,sans-serif; letter-spacing:1px; text-transform:lowercase; }
+		.brand-mark { width:31px; height:31px; display:grid; place-items:center; border-radius:50%; background:var(--coral); color:#fff; transform:rotate(-10deg); font:600 16px 'DM Sans',Arial,sans-serif; }
+		nav { display:flex; gap:2px; padding:4px; border:1px solid var(--line); border-radius:2px; background:rgba(250,248,244,.75); }
+		nav button { border:0; background:transparent; color:var(--muted); padding:10px 15px; border-radius:1px; font:500 11px 'DM Sans',Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+		nav button.active { background:var(--dark); color:#fff; }
+		.hero { display:grid; grid-template-columns:1.15fr .85fr; gap:46px; align-items:end; margin-bottom:48px; }
+		.eyebrow { color:var(--teal); text-transform:uppercase; letter-spacing:2px; font:600 10px 'DM Sans',Arial,sans-serif; margin-bottom:17px; }
+		h1 { margin:0; font:500 clamp(52px,7vw,90px)/.9 'Playfair Display',Georgia,serif; letter-spacing:-3px; max-width:650px; }
+		.hero p { margin:0 0 8px; color:var(--muted); font:14px/1.7 'DM Sans',Arial,sans-serif; max-width:350px; }
+		.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:34px; }
+		.stat { background:rgba(250,248,244,.68); border:1px solid var(--line); padding:19px; border-radius:1px; box-shadow:none; }
+		.stat strong { display:block; font:500 34px 'Playfair Display',Georgia,serif; letter-spacing:0; }
+		.stat span { color:var(--muted); font:600 10px 'DM Sans',Arial,sans-serif; text-transform:uppercase; letter-spacing:1.5px; }
+		.section-head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin:30px 0 17px; }
+		h2 { margin:0; font:500 30px/1.1 'Playfair Display',Georgia,serif; letter-spacing:-.5px; }
+		.section-head p { margin:6px 0 0; color:var(--muted); font:12px 'DM Sans',Arial,sans-serif; }
+		.button { border:0; border-radius:1px; padding:12px 17px; background:var(--dark); color:#fff; font:600 10px 'DM Sans',Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+		.button.light { background:var(--lime); color:var(--ink); }
+		.button.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+		.view { display:none; }
+		.view.active { display:block; }
+		.upload-panel { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+		.dropzone { border:1px solid var(--line); min-height:178px; padding:25px; background:#e9e3d9; border-radius:1px; display:flex; flex-direction:column; justify-content:space-between; }
+		.dropzone.outfits { background:#ead7ce; }
+		.dropzone h3 { margin:0; font:500 24px 'Playfair Display',Georgia,serif; letter-spacing:-.5px; }
+		.dropzone p { margin:7px 0 20px; color:var(--muted); font:13px/1.4 Arial,sans-serif; }
+		.file-label { align-self:flex-start; background:var(--card); border:1px solid var(--line); padding:10px 13px; border-radius:1px; font:600 10px 'DM Sans',Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+		input[type=file] { display:none; }
+		.upload-fields { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+		.upload-fields input, .upload-fields select { min-width:0; width:100%; border:1px solid var(--line); background:#fffefa; padding:10px; border-radius:4px; font:12px Arial,sans-serif; }
+		.upload-status { min-height:16px; margin-top:8px; color:var(--teal); font:11px Arial,sans-serif; }
+		.toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+		.toolbar input, .toolbar select { border:1px solid var(--line); background:#fffefa; padding:10px 12px; border-radius:4px; color:var(--ink); font:13px Arial,sans-serif; }
+		.toolbar input { min-width:210px; }
+		.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; }
+		.item-card { position:relative; overflow:hidden; background:var(--card); border:1px solid var(--line); border-radius:1px; box-shadow:none; transition:transform .3s ease, box-shadow .3s ease; }
+		.item-card:hover { transform:translateY(-5px); box-shadow:var(--shadow); }
+		.item-card { animation: card-in .45s both; }
+		.item-card:nth-child(2) { animation-delay:.05s; } .item-card:nth-child(3) { animation-delay:.1s; } .item-card:nth-child(4) { animation-delay:.15s; }
+		.item-card img { display:block; width:100%; aspect-ratio:1/1.12; object-fit:cover; background:#e8ebe2; }
+		.item-info { padding:13px; }
+		.item-info h3 { margin:0 0 7px; font:500 18px 'Playfair Display',Georgia,serif; }
+		.tag { display:inline-block; color:var(--teal); font:600 10px 'DM Sans',Arial,sans-serif; text-transform:uppercase; letter-spacing:1.5px; }
+		.delete { position:absolute; right:8px; top:8px; width:27px; height:27px; border:0; border-radius:50%; background:rgba(255,255,255,.9); color:var(--ink); font:bold 16px Arial; }
+		.empty { padding:44px 20px; text-align:center; border:1px dashed #bdc1b8; color:var(--muted); font:14px Arial,sans-serif; }
+		.planner { display:grid; grid-template-columns:1.2fr .8fr; gap:20px; }
+		.look { min-height:430px; background:linear-gradient(145deg,#282521,#403930); color:#fff; border-radius:1px; padding:27px; display:grid; grid-template-columns:repeat(3,1fr); gap:12px; box-shadow:0 22px 50px rgba(67,53,39,.18); position:relative; overflow:hidden; }
+		.look::before { content:''; position:absolute; width:260px; height:260px; right:-100px; top:-110px; border:1px solid rgba(201,238,114,.25); border-radius:50%; animation: orbit 8s linear infinite; }
+		.look h2 { grid-column:1/-1; color:var(--lime); }
+		.slot { min-height:150px; border:1px dashed rgba(242,235,224,.4); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; border-radius:1px; background:rgba(255,255,255,.05); transition:transform .25s ease, border-color .25s ease; }
+		.slot:hover { transform:translateY(-4px); border-color:var(--lime); }
+		.slot img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+		.slot span { position:relative; color:#b9c4bc; font:11px Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+		.custom-look-slots { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:10px; }
+		.custom-look-slot { position:relative; width:110px; height:135px; overflow:hidden; border:1px solid rgba(201,238,114,.55); border-radius:5px; background:rgba(255,255,255,.08); animation:image-in .35s ease both; }
+		.custom-look-slot img { width:100%; height:100%; object-fit:cover; }
+		.custom-look-slot span { position:absolute; left:6px; bottom:6px; right:6px; padding:4px; background:rgba(24,33,31,.82); color:#fffefa; font:10px Arial,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+		.remove-custom { position:absolute; z-index:1; top:5px; right:5px; border:0; border-radius:50%; width:24px; height:24px; background:#fffefa; color:var(--ink); font:bold 14px Arial,sans-serif; }
+		.pickers { display:grid; gap:12px; align-content:start; }
+		.picker { background:var(--card); border:1px solid var(--line); padding:15px; border-radius:1px; transition:transform .25s ease, box-shadow .25s ease; }
+		.picker label { display:block; margin-bottom:8px; color:var(--muted); font:bold 11px Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+		.picker select { width:100%; border:1px solid var(--line); padding:10px; background:var(--paper); font:13px 'DM Sans',Arial,sans-serif; }
+		.picker.selected { border-color:var(--teal); box-shadow:0 0 0 3px rgba(29,115,105,.12); transform:translateX(4px); transition:transform .25s ease, box-shadow .25s ease; }
+		.custom-accessory { margin-top:12px; padding:15px; background:#f8e1d8; border:1px solid #edc1b5; border-radius:8px; }
+		.custom-accessory h3 { margin:0 0 8px; font-size:18px; }
+		.custom-accessory p { margin:0 0 10px; color:var(--muted); font:12px/1.4 Arial,sans-serif; }
+		.custom-accessory input, .custom-accessory select { width:100%; margin:4px 0; padding:10px; border:1px solid var(--line); border-radius:4px; background:#fffefa; font:12px Arial,sans-serif; }
+		.custom-accessory .button { width:100%; margin-top:7px; }
+		.view.active { animation: view-in .35s ease both; }
+		.reveal { opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+		.reveal.visible { opacity:1; transform:none; }
+		.button, .file-label, nav button { transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
+		.button:hover, .file-label:hover { transform:translateY(-2px); box-shadow:0 8px 18px rgba(24,33,31,.12); }
+		.slot img { animation: image-in .35s ease both; }
+		@keyframes card-in { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+		@keyframes view-in { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
+		@keyframes image-in { from { opacity:0; transform:scale(1.04); } to { opacity:1; transform:scale(1); } }
+		@keyframes orbit { to { transform:rotate(360deg); } }
+		@media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+		@media (max-width:760px) { .app.authenticated{padding:20px 16px 45px}.topbar{align-items:flex-start; flex-direction:column; margin-bottom:38px}.topbar .account{width:100%; justify-content:space-between}nav{width:100%; overflow:auto}nav button{white-space:nowrap}.hero,.upload-panel,.planner{grid-template-columns:1fr}.stats{gap:7px}.stat{padding:12px}.stat strong{font-size:25px}h1{letter-spacing:-3px}.look{min-height:300px; grid-template-columns:repeat(2,1fr); padding:18px;}.slot{min-height:120px}.details-card{grid-template-columns:1fr; padding:22px}.details-art{min-height:180px}.details-card h1{font-size:34px} }
+	</style>
+</head>
+<body>
+	<section id="authScreen"><div class="auth-card"><div class="eyebrow">Your personal wardrobe archive</div><h1>Welcome to wearwell.</h1><p id="authIntro">Sign in to keep your closet synced securely across your devices.</p><form id="authForm"><input id="authEmail" type="email" placeholder="Email address" autocomplete="email" required><input id="authPassword" type="password" placeholder="Password (6+ characters)" autocomplete="current-password" minlength="6" required><div id="authError" class="auth-error" role="alert"></div><div class="auth-actions"><button class="button light" id="authSubmit" type="submit">Sign in</button><button class="button ghost" id="googleBtn" type="button">Continue with Google</button><button class="auth-switch" id="authSwitch" type="button">Create a new account</button></div></form></div></section>
+	<section id="detailsScreen"><div class="details-card"><div class="details-art"><h2>Dress with<br>intention.</h2></div><form id="detailsForm"><div class="eyebrow">A little about you</div><h1>Make it yours.</h1><p>Tell us the basics so your wardrobe space feels personal. You can change these details later.</p><label for="detailsName">Your name</label><input id="detailsName" type="text" placeholder="e.g. Alex" autocomplete="name" required><label for="detailsDob">Date of birth</label><input id="detailsDob" type="date" required><label for="detailsGender">Gender</label><select id="detailsGender"><option>Male</option><option>Female</option></select><div id="detailsError" class="auth-error" role="alert"></div><button class="button light" type="submit">Enter my wardrobe</button></form></div></section>
+	<main id="app" class="app">
+		<header class="topbar reveal"><div class="brand"><span class="brand-mark">W</span> wearwell</div><nav><button class="active" data-view="closet">My closet</button><button data-view="outfits">Outfits</button><button data-view="planner">Plan a look</button></nav><div class="account"><span id="userEmail"></span><button id="signOut" class="button ghost">Sign out</button></div></header>
+		<section class="hero reveal"><div><div class="eyebrow">Your personal wardrobe archive</div><h1>Get dressed from what you own.</h1></div><p>Keep your real clothes, outfit memories, and everyday ideas in one calm little closet.</p></section>
+		<section class="stats reveal"><div class="stat"><strong id="itemCount">0</strong><span>pieces in closet</span></div><div class="stat"><strong id="outfitCount">0</strong><span>outfits saved</span></div><div class="stat"><strong id="categoryCount">0</strong><span>categories</span></div></section>
+		<section id="closet" class="view active">
+			<div class="section-head"><div><h2>Your clothes</h2><p>Shopping photos work great here.</p></div><div class="toolbar"><input id="search" placeholder="Search your closet"><select id="filter"><option value="all">All types</option><option>Tops</option><option>Bottoms</option><option>Shoes</option><option>Outerwear</option><option>Watch</option><option>Necklace</option><option>Bracelet</option><option>Rings</option><option>Accessories</option></select></div></div>
+			<div class="upload-panel"><div class="dropzone"><div><h3>Add a clothing piece</h3><p>Upload a clear product or wardrobe photo. Wearwell can suggest the type from its filename.</p><div class="upload-fields"><input id="itemName" placeholder="Name, e.g. white shirt"><select id="itemType"><option value="auto">Auto detect</option><option>Tops</option><option>Bottoms</option><option>Shoes</option><option>Outerwear</option><option>Watch</option><option>Necklace</option><option>Bracelet</option><option>Rings</option><option>Accessories</option></select></div><div id="itemStatus" class="upload-status"></div></div><label class="file-label">Choose photo <input id="itemUpload" type="file" accept="image/*"></label></div><div class="dropzone outfits"><div><h3>Save an outfit</h3><p>Keep a photo of something you wore so you can revisit it later.</p></div><label class="file-label">Choose photos <input id="outfitUpload" type="file" accept="image/*" multiple></label><div id="outfitStatus" class="upload-status"></div></div></div>
+			<div class="section-head"><div><h2>Everything you own</h2></div></div><div id="itemGrid" class="grid"></div>
+		</section>
+		<section id="outfits" class="view"><div class="section-head"><div><h2>Outfit memories</h2><p>Your three favorite looks, or as many as you like.</p></div></div><div id="outfitGrid" class="grid"></div></section>
+		<section id="planner" class="view"><div class="section-head"><div><h2>Build a look</h2><p id="lookSummary">Pick pieces from your own closet.</p></div><button id="clearLook" class="button ghost">Clear look</button></div><div class="planner"><div class="look"><h2 id="lookTitle">Today’s look</h2><div class="slot" id="slotTops"><span>Choose a top</span></div><div class="slot" id="slotBottoms"><span>Choose a bottom</span></div><div class="slot" id="slotShoes"><span>Choose shoes</span></div><div class="slot" id="slotWatch"><span>Choose a watch</span></div><div class="slot" id="slotAccessories"><span>Choose accessories</span></div><div id="customLookSlots" class="custom-look-slots"></div></div><div><div id="pickers" class="pickers"></div><form id="customAccessoryForm" class="custom-accessory"><h3>Add a custom accessory</h3><p>Add a watch, chain, bracelet, ring, bag, or any detail you own.</p><input id="customAccessoryName" placeholder="Accessory name" required><select id="customAccessoryType"><option>Accessories</option><option>Watch</option><option>Necklace</option><option>Bracelet</option><option>Rings</option></select><button class="button light" type="submit">Add to closet and look</button><div id="customAccessoryStatus" class="upload-status"></div></form></div></div></section>
+	</main>
+	<script type="module">
+		import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+		import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+		import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+		import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+		const firebaseConfig = { apiKey:'AIzaSyDIMiilPZxDtwwbKN1cN1LAUbb42vnFxog', authDomain:'wearwell-e4e18.firebaseapp.com', projectId:'wearwell-e4e18', storageBucket:'wearwell-e4e18.firebasestorage.app', messagingSenderId:'465174519443', appId:'1:465174519443:web:f8a93c21aa84c02755b766', measurementId:'G-BQJHLPHTSY' };
+		const firebaseApp = initializeApp(firebaseConfig); const auth = getAuth(firebaseApp); const db = getFirestore(firebaseApp); const storage = getStorage(firebaseApp); const googleProvider = new GoogleAuthProvider(); let authBusy = false;
+		setPersistence(auth, browserLocalPersistence).catch(() => { $('authError').textContent = 'We could not remember this session. Please try signing in again.'; });
+		const $ = id => document.getElementById(id);
+		const categories = ['Tops', 'Bottoms', 'Shoes', 'Outerwear', 'Watch', 'Necklace', 'Bracelet', 'Rings', 'Accessories'];
+		function normalizeType(type) { const match = categories.find(category => category.toLowerCase() === String(type).trim().toLowerCase()); return match || 'Tops'; }
+		let items = []; let outfits = []; let currentUser = null; let authMode = 'signin';
+		let look = { top:'', bottom:'' };
+		function localKey(kind) { return `wearwell-${kind}-${currentUser?.uid || 'guest'}`; }
+		function loadLocalData() { items = JSON.parse(localStorage.getItem(localKey('items')) || '[]').map(item => ({ ...item, type:normalizeType(item.type) })); outfits = JSON.parse(localStorage.getItem(localKey('outfits')) || '[]'); render(); }
+		function saveLocalData() { localStorage.setItem(localKey('items'), JSON.stringify(items)); localStorage.setItem(localKey('outfits'), JSON.stringify(outfits)); }
+		const save = () => { saveLocalData(); render(); };
+		async function loadCloudData() { const itemSnap = await getDocs(query(collection(db, 'users', currentUser.uid, 'items'), orderBy('createdAt', 'desc'))); const outfitSnap = await getDocs(query(collection(db, 'users', currentUser.uid, 'outfits'), orderBy('createdAt', 'desc'))); const cloudItems = itemSnap.docs.map(item => ({ id:item.id, ...item.data(), type:normalizeType(item.data().type) })); const cloudOutfits = outfitSnap.docs.map(item => ({ id:item.id, ...item.data() })); const unsyncedItems = items.filter(item => item.id.startsWith('local-') && !cloudItems.some(cloud => cloud.name === item.name && cloud.createdAt === item.createdAt)); const unsyncedOutfits = outfits.filter(outfit => outfit.id.startsWith('local-') && !cloudOutfits.some(cloud => cloud.createdAt === outfit.createdAt)); items = [...cloudItems, ...unsyncedItems]; outfits = [...cloudOutfits, ...unsyncedOutfits]; saveLocalData(); render(); }
+		function accessoryImage(name, type) { const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="670"><rect width="100%" height="100%" fill="#18211f"/><circle cx="300" cy="270" r="130" fill="#c9ee72" opacity=".9"/><text x="300" y="285" text-anchor="middle" font-family="Georgia" font-size="64" fill="#18211f">${type}</text><text x="300" y="500" text-anchor="middle" font-family="Arial" font-size="28" fill="#fffefa">${name}</text></svg>`; return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`; }
+		function authError(error, provider) { const messages = { 'auth/invalid-credential':'Email or password is incorrect.', 'auth/email-already-in-use':'That email already has an account.', 'auth/weak-password':'Use a password with at least 6 characters.', 'auth/popup-closed-by-user':'The Google window was closed. You can try again.', 'auth/cancelled-popup-request':'The sign-in window is already open. Finish it or close it, then try again.', 'auth/popup-blocked':'Your browser blocked the sign-in window. Allow popups for this site and try again.', 'auth/operation-not-allowed':provider === 'google' ? 'Google sign-in is not enabled in Firebase yet.' : 'Email/Password sign-in is not enabled in Firebase yet.' }; $('authError').textContent = messages[error.code] || 'Sign-in could not be completed. Please try again.'; }
+		$('authSwitch').onclick = () => { authMode = authMode === 'signin' ? 'signup' : 'signin'; $('authSubmit').textContent = authMode === 'signin' ? 'Sign in' : 'Create account'; $('authSwitch').textContent = authMode === 'signin' ? 'Create a new account' : 'I already have an account'; $('authIntro').textContent = authMode === 'signin' ? 'Sign in to keep your closet synced securely across your devices.' : 'Create an account to protect your closet and outfit memories.'; $('authError').textContent = ''; };
+		$('authForm').onsubmit = async event => { event.preventDefault(); if (authBusy) return; authBusy = true; $('authError').textContent = ''; try { const email = $('authEmail').value.trim(); const password = $('authPassword').value; const result = authMode === 'signin' ? await signInWithEmailAndPassword(auth,email,password) : await createUserWithEmailAndPassword(auth,email,password); if (authMode === 'signup') { await sendEmailVerification(result.user); $('authError').className = 'auth-error success'; $('authError').textContent = 'Account created. Check your email to verify it.'; } } catch (error) { $('authError').className = 'auth-error'; authError(error, 'email'); } finally { authBusy = false; } };
+		$('googleBtn').onclick = async () => { if (authBusy) return; authBusy = true; $('googleBtn').textContent = 'Opening Google...'; $('authError').textContent = ''; try { await signInWithPopup(auth, googleProvider); } catch (error) { authError(error, 'google'); } finally { authBusy = false; $('googleBtn').textContent = 'Continue with Google'; } };
+		$('signOut').onclick = () => signOut(auth);
+		$('detailsForm').onsubmit = async event => { event.preventDefault(); const submit = event.submitter; if (!currentUser) { $('detailsError').textContent = 'Your sign-in is still loading. Please wait a moment and try again.'; return; } submit.disabled = true; submit.textContent = 'Saving your details...'; $('detailsError').textContent = ''; const profile = { name:$('detailsName').value.trim(), dob:$('detailsDob').value, gender:$('detailsGender').value, email:currentUser.email, updatedAt:Date.now() }; localStorage.setItem(`wearwell-profile-${currentUser.uid}`, JSON.stringify(profile)); $('userEmail').textContent = profile.name; $('detailsScreen').style.display = 'none'; $('app').classList.add('authenticated'); submit.textContent = 'Saved'; try { await Promise.race([setDoc(doc(db, 'users', currentUser.uid), profile, { merge:true }), new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))]); } catch (error) { $('itemStatus').textContent = 'Profile saved on this device. Cloud sync will retry when Firebase reconnects.'; } loadCloudData().catch(() => {}); };
+		const readImage = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+		function detectType(name) {
+			const lowerName = name.toLowerCase();
+			if (/shoe|sneaker|boot|heel|sandal/.test(lowerName)) return 'Shoes';
+			if (/jean|pant|trouser|short|skirt|bottom/.test(lowerName)) return 'Bottoms';
+			if (/coat|jacket|hoodie|blazer|outerwear/.test(lowerName)) return 'Outerwear';
+			if (/watch|wristwatch|smartwatch/.test(lowerName)) return 'Watch';
+			if (/necklace|chain|pendant/.test(lowerName)) return 'Necklace';
+			if (/bracelet|bangle/.test(lowerName)) return 'Bracelet';
+			if (/ring|rings/.test(lowerName)) return 'Rings';
+			if (/bag|belt|hat|cap|watch|scarf|accessor/.test(lowerName)) return 'Accessories';
+			return 'Tops';
+		}
+		function render() {
+			$('itemCount').textContent = items.length; $('outfitCount').textContent = outfits.length; $('categoryCount').textContent = new Set(items.map(x => x.type)).size;
+			const query = $('search').value.toLowerCase(); const type = $('filter').value;
+			const shown = items.filter(x => (!query || x.name.toLowerCase().includes(query)) && (type === 'all' || x.type === type));
+			$('itemGrid').innerHTML = shown.length ? shown.map(x => `<article class="item-card"><button class="delete" data-delete-item="${x.id}" aria-label="Delete ${x.name}">×</button><img src="${x.image}" alt="${x.name}"><div class="item-info"><h3>${x.name}</h3><span class="tag">${x.type}</span></div></article>`).join('') : '<div class="empty">Your closet is waiting for its first piece.</div>';
+			$('outfitGrid').innerHTML = outfits.length ? outfits.map(x => `<article class="item-card"><button class="delete" data-delete-outfit="${x.id}" aria-label="Delete outfit">×</button><img src="${x.image}" alt="Saved outfit"><div class="item-info"><h3>Worn look</h3><span class="tag">${new Date(x.date).toLocaleDateString()}</span></div></article>`).join('') : '<div class="empty">Save an outfit photo to start your style diary.</div>';
+			renderPickers();
+		}
+		const plannerSlots = ['Tops', 'Bottoms', 'Shoes', 'Watch', 'Accessories'];
+		function renderPickers() { $('pickers').innerHTML = plannerSlots.map(category => `<div class="picker ${look[category] ? 'selected' : ''}"><label>${category}</label><select data-slot="${category}"><option value="">Choose ${category.toLowerCase()}</option>${items.filter(x => x.type === category).map(x => `<option value="${x.id}" ${look[category] === x.id ? 'selected' : ''}>${x.name}</option>`).join('')}</select></div>`).join(''); plannerSlots.forEach(category => { const select = document.querySelector(`[data-slot="${category}"]`); select.onchange = () => { look[category] = select.value; updateSlot(category); updateSummary(); renderPickers(); }; updateSlot(category); }); updateSummary(); }
+		function updateSlot(category) { const item = items.find(x => x.id === look[category]); const el = $(`slot${category}`); el.innerHTML = item ? `<img src="${item.image}" alt="${item.name}">` : `<span>Choose ${category.toLowerCase()}</span>`; }
+		function renderCustomLookSlots() { const selected = items.filter(item => item.custom && look[item.id]); $('customLookSlots').innerHTML = selected.map(item => `<div class="custom-look-slot"><button class="remove-custom" data-remove-custom="${item.id}" aria-label="Remove ${item.name} from today’s look">×</button><img src="${item.image}" alt="${item.name}"><span>${item.name}</span></div>`).join(''); }
+		function updateSummary() { const selected = plannerSlots.filter(category => look[category]).length + items.filter(item => item.custom && look[item.id]).length; $('lookSummary').textContent = selected ? `${selected} piece${selected === 1 ? '' : 's'} selected for today’s look.` : 'Pick pieces from your own closet.'; renderCustomLookSlots(); }
+		document.querySelectorAll('nav button').forEach(button => button.onclick = () => { document.querySelectorAll('nav button,.view').forEach(x => x.classList.remove('active')); button.classList.add('active'); $(button.dataset.view).classList.add('active'); });
+		$('itemUpload').onchange = async e => { const file = e.target.files[0]; if (!file || !currentUser) return; const typeSelect = $('itemType'); const nameInput = $('itemName'); if (!nameInput.value) nameInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '); const type = typeSelect.value === 'auto' ? detectType(`${nameInput.value} ${file.name}`) : normalizeType(typeSelect.value); const localItem = { id:`local-${crypto.randomUUID()}`, image:await readImage(file), name:nameInput.value.trim() || 'Untitled piece', type, createdAt:Date.now() }; items.unshift(localItem); saveLocalData(); render(); $('itemStatus').textContent = `Added to ${type}. Syncing to your account...`; try { const imageRef = ref(storage, `users/${currentUser.uid}/items/${crypto.randomUUID()}-${file.name}`); await uploadBytes(imageRef, file); const image = await getDownloadURL(imageRef); await addDoc(collection(db, 'users', currentUser.uid, 'items'), { image, name:localItem.name, type, createdAt:localItem.createdAt }); } catch (error) { $('itemStatus').textContent = `Added to ${type} on this device. Cloud sync will retry later.`; } e.target.value = ''; nameInput.value = ''; typeSelect.value = 'auto'; };
+		$('outfitUpload').onchange = async e => { const files = [...e.target.files]; if (!files.length || !currentUser) return; $('outfitStatus').textContent = `Saving ${files.length} outfit photo${files.length === 1 ? '' : 's'}...`; for (const file of files) { const localOutfit = { id:`local-${crypto.randomUUID()}`, image:await readImage(file), date:Date.now(), createdAt:Date.now() }; outfits.unshift(localOutfit); saveLocalData(); render(); try { const imageRef = ref(storage, `users/${currentUser.uid}/outfits/${crypto.randomUUID()}-${file.name}`); await uploadBytes(imageRef, file); const image = await getDownloadURL(imageRef); await addDoc(collection(db, 'users', currentUser.uid, 'outfits'), { image, date:localOutfit.date, createdAt:localOutfit.createdAt }); } catch (error) { } } $('outfitStatus').textContent = `${files.length} outfit photo${files.length === 1 ? '' : 's'} added. Cloud sync will retry later if needed.`; e.target.value = ''; };
+		$('customAccessoryForm').onsubmit = async event => { event.preventDefault(); if (!currentUser) { $('customAccessoryStatus').textContent = 'Please sign in first.'; return; } const name = $('customAccessoryName').value.trim(); const type = $('customAccessoryType').value; const localItem = { id:`local-${crypto.randomUUID()}`, image:accessoryImage(name, type), name, type, custom:true, createdAt:Date.now() }; items.unshift(localItem); look[localItem.id] = true; saveLocalData(); render(); $('customAccessoryStatus').textContent = `${name} added to today’s look.`; $('customAccessoryName').value = ''; try { const saved = await addDoc(collection(db, 'users', currentUser.uid, 'items'), { image:localItem.image, name, type, custom:true, createdAt:localItem.createdAt }); items = items.map(item => item.id === localItem.id ? {...item, id:saved.id} : item); delete look[localItem.id]; look[saved.id] = true; saveLocalData(); render(); } catch (error) { $('customAccessoryStatus').textContent = `${name} added on this device. Cloud sync will retry later.`; } };
+		document.addEventListener('click', async e => { if (e.target.dataset.removeCustom) { delete look[e.target.dataset.removeCustom]; render(); return; } if (e.target.dataset.deleteItem && currentUser) { const itemId = e.target.dataset.deleteItem; items = items.filter(item => item.id !== itemId); delete look[itemId]; saveLocalData(); render(); if (!itemId.startsWith('local-')) { try { await deleteDoc(doc(db, 'users', currentUser.uid, 'items', itemId)); } catch (error) { } } } if (e.target.dataset.deleteOutfit && currentUser) { const outfitId = e.target.dataset.deleteOutfit; outfits = outfits.filter(outfit => outfit.id !== outfitId); saveLocalData(); render(); if (!outfitId.startsWith('local-')) { try { await deleteDoc(doc(db, 'users', currentUser.uid, 'outfits', outfitId)); } catch (error) { } } } });
+		$('search').oninput = render; $('filter').onchange = render; $('clearLook').onclick = () => { look = {}; renderPickers(); }; render();
+		const observer = new IntersectionObserver(entries => entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }), { threshold:.12 }); document.querySelectorAll('.reveal').forEach(element => observer.observe(element));
+		window.addEventListener('scroll', () => { const max = document.documentElement.scrollHeight - window.innerHeight; document.body.style.setProperty('--scroll-progress', `${max ? (window.scrollY / max) * 100 : 0}%`); }, { passive:true });
+		onAuthStateChanged(auth, async user => { currentUser = user; if (!user) { $('authScreen').style.display = 'grid'; $('detailsScreen').style.display = 'none'; $('app').classList.remove('authenticated'); return; } if (!user.emailVerified && user.providerData[0]?.providerId === 'password') { $('authError').textContent = 'Please verify your email, then sign in again.'; await signOut(auth); return; } $('authScreen').style.display = 'none'; loadLocalData(); const localProfile = JSON.parse(localStorage.getItem(`wearwell-profile-${user.uid}`) || 'null'); if (localProfile?.name && localProfile?.dob) { $('detailsScreen').style.display = 'none'; $('app').classList.add('authenticated'); $('userEmail').textContent = localProfile.name; loadCloudData().catch(() => {}); return; } $('userEmail').textContent = user.email || 'Google account'; try { const profile = await Promise.race([getDoc(doc(db, 'users', user.uid)), new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))]); if (!profile.exists() || !profile.data().name || !profile.data().dob) { $('detailsScreen').style.display = 'grid'; $('app').classList.remove('authenticated'); return; } localStorage.setItem(`wearwell-profile-${user.uid}`, JSON.stringify(profile.data())); $('detailsScreen').style.display = 'none'; $('app').classList.add('authenticated'); $('userEmail').textContent = profile.data().name; loadCloudData().catch(() => {}); } catch (error) { $('detailsScreen').style.display = 'grid'; $('app').classList.remove('authenticated'); $('detailsError').textContent = 'Please enter your details once. They will be saved on this device while Firebase reconnects.'; } });
+	</script>
+</body>
+</html>
