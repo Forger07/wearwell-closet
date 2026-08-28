@@ -1,0 +1,24 @@
+{
+  "name": "Wearwell Closet",
+  "short_name": "Wearwell",
+  "description": "Your personal wardrobe archive and daily outfit planner.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f1eb",
+  "theme_color": "#1d1c1a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=192&q=80",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=512&q=80",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
