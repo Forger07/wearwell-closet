@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chrome Dino Runner HD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Press+Start+2P&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .game-container {
+      position: relative;
+      width: 960px;
+      height: 480px;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.2);
+      overflow: hidden;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px 32px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: #38bdf8;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .score-board {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      display: flex;
+      gap: 24px;
+    }
+
+    .hi-score {
+      color: #94a3b8;
+    }
+
+    .current-score {
+      color: #f1f5f9;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    }
+
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 36px 48px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 24px;
+      color: #ef4444;
+      margin-bottom: 16px;
+      text-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    }
+
+    .modal-score {
+      font-size: 18px;
+      color: #cbd5e1;
+      margin-bottom: 24px;
+    }
+
+    .btn-restart {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: #0f172a;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      border: none;
+      padding: 14px 36px;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 20px -5px rgba(56, 189, 248, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-restart:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 25px -5px rgba(56, 189, 248, 0.6);
+    }
+
+    .controls-hint {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game-container">
+    <canvas id="gameCanvas" width="960" height="480"></canvas>
+
+    <div class="ui-layer">
+      <div class="header">
+        <div class="title">DINO RUNNER HD</div>
+        <div class="score-board">
+          <span class="hi-score" id="hiScoreText">HI 00000</span>
+          <span class="current-score" id="scoreText">00000</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="gameOverModal">
+      <div class="modal-card">
+        <div class="modal-title">GAME OVER</div>
+        <div class="modal-score" id="finalScoreText">SCORE: 00000</div>
+        <button class="btn-restart" id="restartBtn">PLAY AGAIN</button>
+        <div class="controls-hint">Press SPACE or UP Arrow to jump</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreText = document.getElementById('scoreText');
+    const hiScoreText = document.getElementById('hiScoreText');
+    const gameOverModal = document.getElementById('gameOverModal');
+    const finalScoreText = document.getElementById('finalScoreText');
+    const restartBtn = document.getElementById('restartBtn');
+
+    // Audio Synthesizer (Web Audio API)
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = AudioContext ? new AudioContext() : null;
+
+    function playBeep(freq, duration) {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // Game Constants
+    const GROUND_Y = 380;
+    let state = 'PLAYING';
+    let score = 0;
+    let highScore = 0;
+    let distance = 0;
+    let gameSpeed = 7.5;
+    let animFrame = 0;
+
+    // Dino Object
+    const dino = {
+      x: 90,
+      y: GROUND_Y - 55,
+      vy: 0,
+      width: 44,
+      height: 52,
+      isGrounded: true,
+      isDucking: false
+    };
+
+    // Particles & Clouds
+    let particles = [];
+    let clouds = [];
+    let obstacles = [];
+    let groundOffset = 0;
+
+    function initGame() {
+      state = 'PLAYING';
+      score = 0;
+      distance = 0;
+      gameSpeed = 7.5;
+      dino.y = GROUND_Y - 55;
+      dino.vy = 0;
+      dino.isGrounded = true;
+      dino.isDucking = false;
+      particles = [];
+      obstacles = [];
+      clouds = [];
+
+      for (let i = 0; i < 5; i++) {
+        clouds.push({
+          x: Math.random() * canvas.width,
+          y: 40 + Math.random() * 120,
+          width: 60 + Math.random() * 40,
+          speed: 0.5 + Math.random() * 0.8
+        });
+      }
+      gameOverModal.classList.remove('active');
+    }
+
+    function spawnDust(x, y, count, color = 'rgba(217, 119, 6, 0.8)') {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: x + (Math.random() * 14 - 7),
+          y: y + (Math.random() * 8 - 4),
+          vx: -(Math.random() * 3 + 1),
+          vy: -(Math.random() * 2 + 0.3),
+          size: Math.random() * 5 + 3,
+          alpha: 1,
+          color: color
+        });
+      }
+    }
+
+    // Input Handling
+    const keys = {};
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        if (state === 'GAMEOVER') {
+          initGame();
+        } else if (state === 'PLAYING' && dino.isGrounded) {
+          dino.vy = -15;
+          dino.isGrounded = false;
+          playBeep(600, 0.08);
+          spawnDust(dino.x + 10, GROUND_Y - 5, 8);
+        }
+      }
+      if (e.code === 'ArrowDown' && state === 'PLAYING' && dino.isGrounded) {
+        e.preventDefault();
+        dino.isDucking = true;
+      }
+    });
+
+    window.addEventListener('keyup', e => {
+      if (e.code === 'ArrowDown') {
+        dino.isDucking = false;
+      }
+      if ((e.code === 'Space' || e.code === 'ArrowUp') && dino.vy < -4) {
+        dino.vy += 4.5;
+      }
+    });
+
+    restartBtn.addEventListener('click', initGame);
+
+    canvas.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (state === 'GAMEOVER') {
+        initGame();
+      } else if (state === 'PLAYING' && dino.isGrounded) {
+        dino.vy = -15;
+        dino.isGrounded = false;
+        playBeep(600, 0.08);
+        spawnDust(dino.x + 10, GROUND_Y - 5, 8);
+      }
+    });
+
+    // Update Loop
+    function update() {
+      if (state !== 'PLAYING') return;
+
+      animFrame++;
+      distance += gameSpeed * 0.12;
+      score = Math.floor(distance);
+      if (score > highScore) highScore = score;
+
+      gameSpeed += 0.0008;
+      groundOffset = (groundOffset + gameSpeed) % 40;
+
+      // Update UI Text
+      scoreText.innerText = String(score).padStart(5, '0');
+      hiScoreText.innerText = 'HI ' + String(highScore).padStart(5, '0');
+
+      // Dino Physics
+      dino.vy += 0.9;
+      dino.y += dino.vy;
+
+      if (dino.y >= GROUND_Y - 55) {
+        if (!dino.isGrounded) {
+          spawnDust(dino.x + 15, GROUND_Y - 5, 10);
+        }
+        dino.y = GROUND_Y - 55;
+        dino.vy = 0;
+        dino.isGrounded = true;
+      }
+
+      if (dino.isGrounded && animFrame % 4 === 0) {
+        spawnDust(dino.x + 5, GROUND_Y - 8, 2);
+      }
+
+      // Particles Update
+      particles.forEach((p, idx) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.03;
+        if (p.alpha <= 0) particles.splice(idx, 1);
+      });
+
+      // Clouds Update
+      clouds.forEach(c => {
+        c.x -= c.speed;
+        if (c.x < -100) {
+          c.x = canvas.width + 50;
+          c.y = 40 + Math.random() * 120;
+        }
+      });
+
+      // Obstacle Spawning
+      const minDistance = 420;
+      let canSpawn = true;
+      obstacles.forEach(o => {
+        if (o.x > canvas.width - minDistance) canSpawn = false;
+      });
+
+      if (canSpawn && Math.random() < 0.02) {
+        const obs = {
+          x: canvas.width,
+          width: 48,
+          height: 76,
+          y: GROUND_Y - 76
+        };
+        obstacles.push(obs);
+      }
+
+      // Move Obstacles & Collision Check
+      const curDinoY = dino.y + (dino.isDucking ? 25 : 5);
+      const dinoW = dino.isDucking ? 65 : 44;
+      const dinoH = dino.isDucking ? 30 : 48;
+
+      obstacles.forEach((o, idx) => {
+        o.x -= gameSpeed;
+        if (o.x < -80) obstacles.splice(idx, 1);
+
+        // AABB Collision Box
+        const ox = o.x + 4;
+        const oy = o.y + 4;
+        const ow = o.width - 8;
+        const oh = o.height - 8;
+
+        if (dino.x < ox + ow && dino.x + dinoW > ox &&
+          curDinoY < oy + oh && curDinoY + dinoH > oy) {
+          state = 'GAMEOVER';
+          playBeep(200, 0.3);
+          spawnDust(dino.x + 20, curDinoY + 20, 30, 'rgba(239, 68, 68, 0.9)');
+          finalScoreText.innerText = `SCORE: ${String(score).padStart(5, '0')}`;
+          gameOverModal.classList.add('active');
+        }
+      });
+    }
+
+    // Render Function
+    function render() {
+      // Sky Gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+      skyGrad.addColorStop(0, '#0f172a');
+      skyGrad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, canvas.width, GROUND_Y);
+
+      // Stars / Sun
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.arc(canvas.width - 120, 70, 24, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Clouds
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      clouds.forEach(c => {
+        ctx.beginPath();
+        ctx.roundRect(c.x, c.y, c.width, 24, 12);
+        ctx.fill();
+      });
+
+      // Ground Surface
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+
+      // Ground Edge Line
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, GROUND_Y);
+      ctx.lineTo(canvas.width, GROUND_Y);
+      ctx.stroke();
+
+      // Gravel Texture
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      for (let x = -40 - groundOffset; x < canvas.width + 40; x += 35) {
+        ctx.beginPath();
+        ctx.moveTo(x, GROUND_Y + 14);
+        ctx.lineTo(x + 10, GROUND_Y + 14);
+        ctx.stroke();
+      }
+
+      // Dust Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+
+      // Cactus obstacles
+      obstacles.forEach(o => {
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.roundRect(o.x + 12, o.y, 24, o.height, 8);
+        ctx.roundRect(o.x, o.y + 22, 16, 12, 6);
+        ctx.roundRect(o.x + 32, o.y + 36, 16, 12, 6);
+        ctx.fill();
+      });
+
+      // Side-facing Portugal footballer player
+      const curY = dino.y + (dino.isDucking ? 25 : 0);
+      if (dino.isDucking) {
+        drawSideRonaldo(dino.x, curY - 2, 65, 30, true);
+      } else {
+        drawSideRonaldo(dino.x, dino.y, 44, 52, false);
+      }
+    }
+
+    function drawSideRonaldo(x, y, width, height, isDucking) {
+      const scale = isDucking ? width / 65 : width / 44;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+
+      if (isDucking) {
+        ctx.fillStyle = '#c1121f';
+        ctx.beginPath();
+        ctx.roundRect(4, 7, 48, 22, 9);
+        ctx.fill();
+        ctx.fillStyle = '#166534';
+        ctx.fillRect(26, 20, 20, 9);
+        ctx.fillStyle = '#f0b58d';
+        ctx.beginPath();
+        ctx.arc(51, 12, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#24150f';
+        ctx.beginPath();
+        ctx.arc(53, 9, 7, Math.PI, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      // Shadow and side-facing legs
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(22, 51, 17, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(13, 39, 6, 10);
+      ctx.fillRect(26, 39, 6, 10);
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(10, 48, 12, 3);
+      ctx.fillRect(24, 48, 12, 3);
+
+      // Green shorts and Portugal red jersey
+      ctx.fillStyle = '#166534';
+      ctx.fillRect(11, 31, 23, 12);
+      ctx.fillStyle = '#c1121f';
+      ctx.beginPath();
+      ctx.roundRect(9, 14, 28, 24, 6);
+      ctx.fill();
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(9, 14, 5, 24);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('7', 25, 30);
+
+      // Side-facing arm and head
+      ctx.strokeStyle = '#f0b58d';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(34, 20);
+      ctx.lineTo(41, 34);
+      ctx.stroke();
+
+      ctx.fillStyle = '#f0b58d';
+      ctx.beginPath();
+      ctx.arc(28, 8, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#24150f';
+      ctx.beginPath();
+      ctx.arc(28, 5, 9, Math.PI, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(32, 9, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#7f1d1d';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(34, 12, 3, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function gameLoop() {
+      update();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    initGame();
+    gameLoop();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Lock down storage by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Allow authenticated users to upload and view only their own image files
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+                         && request.auth.uid == userId
+                         && (request.resource == null || (request.resource.contentType.matches('image/.*') && request.resource.size <= 10 * 1024 * 1024));
+    }
+  }
+}
