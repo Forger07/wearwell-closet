@@ -1,7 +1,0 @@
-.firebase/
-*.exe
-*.o
-node_modules/
-.env
-.env.*
-!.env.example
