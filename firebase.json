@@ -2,13 +2,11 @@
   "firestore": { "rules": "firestore.rules" },
   "storage": { "rules": "storage.rules" },
   "hosting": {
-    "public": ".",
+    "site": "wearwell-e4e18",
+    "public": "website",
     "ignore": [
-      "firebase.json",
       "**/.*",
-      "**/node_modules/**",
-      "**/*.exe",
-      "**/*.o"
+      "**/node_modules/**"
     ],
     "cleanUrls": true
   }

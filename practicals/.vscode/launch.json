@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/Kamran/Desktop/LUCKY DOCS/HELOW WORLD/hellolucky",
-      "program": "c:/Users/Kamran/Desktop/LUCKY DOCS/HELOW WORLD/hellolucky/build/Debug/outDebug",
+      "cwd": "c:/Users/Kamran/Desktop/LUCKY DOCS/HELOW WORLD/practicals",
+      "program": "c:/Users/Kamran/Desktop/LUCKY DOCS/HELOW WORLD/practicals/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

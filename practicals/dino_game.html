@@ -18,7 +18,7 @@
     }
 
     body {
-      background: #0f172a;
+      background: #07111f;
       color: #f8fafc;
       font-family: 'Outfit', sans-serif;
       min-height: 100vh;
@@ -34,10 +34,10 @@
       width: 960px;
       height: 480px;
       border-radius: 16px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.2);
+      box-shadow: 0 28px 70px -18px rgba(0, 0, 0, 0.8), 0 0 42px rgba(34, 211, 238, 0.18);
       overflow: hidden;
-      background: #1e293b;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #10243b;
+      border: 1px solid rgba(125, 211, 252, 0.3);
     }
 
     canvas {
@@ -56,13 +56,14 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 24px 32px;
+      padding: 22px 28px 20px;
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 20px;
     }
 
     .title {
@@ -71,6 +72,23 @@
       color: #38bdf8;
       text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
       letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title::before {
+      content: '';
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #67e8f9;
+      box-shadow: 0 0 14px #22d3ee;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      50% { opacity: 0.45; transform: scale(0.75); }
     }
 
     .score-board {
@@ -78,6 +96,7 @@
       font-size: 16px;
       display: flex;
       gap: 24px;
+      align-items: center;
     }
 
     .hi-score {
@@ -87,6 +106,41 @@
     .current-score {
       color: #f1f5f9;
       text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+    }
+
+    .score-label {
+      color: #64748b;
+      font: 600 10px 'Outfit', sans-serif;
+      letter-spacing: 1px;
+      margin-right: 6px;
+    }
+
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #b6c8dc;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .control-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(125, 211, 252, 0.24);
+      border-radius: 8px;
+      background: rgba(7, 17, 31, 0.4);
+      backdrop-filter: blur(6px);
+    }
+
+    kbd {
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #082f49;
+      background: #a5f3fc;
+      font: 800 10px 'Outfit', sans-serif;
     }
 
     .modal-overlay {
@@ -164,6 +218,15 @@
       font-size: 13px;
       color: #64748b;
     }
+
+    @media (max-width: 700px) {
+      .game-container { width: 100vw; height: min(100vh, 480px); border-radius: 0; }
+      .ui-layer { padding: 18px 16px 16px; }
+      .title { font-size: 10px; }
+      .score-board { gap: 10px; font-size: 11px; }
+      .bottom-bar { font-size: 10px; }
+      .control-chip { padding: 6px 8px; }
+    }
   </style>
 </head>
 
@@ -177,8 +240,12 @@
         <div class="title">DINO RUNNER HD</div>
         <div class="score-board">
           <span class="hi-score" id="hiScoreText">HI 00000</span>
-          <span class="current-score" id="scoreText">00000</span>
+          <span class="current-score"><span class="score-label">RUN</span><span id="scoreText">00000</span></span>
         </div>
+      </div>
+      <div class="bottom-bar">
+        <span>KEEP MOVING</span>
+        <span class="control-chip"><kbd>SPACE</kbd> / <kbd>UP</kbd> JUMP <kbd>DOWN</kbd> DUCK</span>
       </div>
     </div>
 
@@ -223,6 +290,11 @@
 
     // Game Constants
     const GROUND_Y = 380;
+    const JUMP_VELOCITY = -16.5;
+    const GRAVITY = 0.72;
+    const EARLY_RELEASE_BOOST = 1.5;
+    const MAX_GAME_SPEED = 10.5;
+    const MIN_OBSTACLE_GAP = 560;
     let state = 'PLAYING';
     let score = 0;
     let highScore = 0;
@@ -245,7 +317,6 @@
     let particles = [];
     let clouds = [];
     let obstacles = [];
-    let groundOffset = 0;
 
     function initGame() {
       state = 'PLAYING';
@@ -293,7 +364,7 @@
         if (state === 'GAMEOVER') {
           initGame();
         } else if (state === 'PLAYING' && dino.isGrounded) {
-          dino.vy = -15;
+          dino.vy = JUMP_VELOCITY;
           dino.isGrounded = false;
           playBeep(600, 0.08);
           spawnDust(dino.x + 10, GROUND_Y - 5, 8);
@@ -309,8 +380,8 @@
       if (e.code === 'ArrowDown') {
         dino.isDucking = false;
       }
-      if ((e.code === 'Space' || e.code === 'ArrowUp') && dino.vy < -4) {
-        dino.vy += 4.5;
+      if ((e.code === 'Space' || e.code === 'ArrowUp') && dino.vy < -6) {
+        dino.vy += EARLY_RELEASE_BOOST;
       }
     });
 
@@ -321,7 +392,7 @@
       if (state === 'GAMEOVER') {
         initGame();
       } else if (state === 'PLAYING' && dino.isGrounded) {
-        dino.vy = -15;
+        dino.vy = JUMP_VELOCITY;
         dino.isGrounded = false;
         playBeep(600, 0.08);
         spawnDust(dino.x + 10, GROUND_Y - 5, 8);
@@ -337,15 +408,14 @@
       score = Math.floor(distance);
       if (score > highScore) highScore = score;
 
-      gameSpeed += 0.0008;
-      groundOffset = (groundOffset + gameSpeed) % 40;
+      gameSpeed = Math.min(MAX_GAME_SPEED, gameSpeed + 0.0008);
 
       // Update UI Text
       scoreText.innerText = String(score).padStart(5, '0');
       hiScoreText.innerText = 'HI ' + String(highScore).padStart(5, '0');
 
       // Dino Physics
-      dino.vy += 0.9;
+      dino.vy += GRAVITY;
       dino.y += dino.vy;
 
       if (dino.y >= GROUND_Y - 55) {
@@ -379,18 +449,27 @@
       });
 
       // Obstacle Spawning
-      const minDistance = 420;
+      const minDistance = Math.max(MIN_OBSTACLE_GAP, gameSpeed * 62);
       let canSpawn = true;
       obstacles.forEach(o => {
         if (o.x > canvas.width - minDistance) canSpawn = false;
       });
 
       if (canSpawn && Math.random() < 0.02) {
+        const typeRoll = Math.random();
+        const type = typeRoll < 0.34 ? 'chair' : typeRoll < 0.62 ? 'bin' : 'shop';
+        const profiles = {
+          chair: { width: 58, height: 38 },
+          bin: { width: 38, height: 42 },
+          shop: { width: 72, height: 48 }
+        };
+        const profile = profiles[type];
         const obs = {
           x: canvas.width,
-          width: 48,
-          height: 76,
-          y: GROUND_Y - 76
+          width: profile.width,
+          height: profile.height,
+          y: GROUND_Y - profile.height,
+          type
         };
         obstacles.push(obs);
       }
@@ -425,45 +504,134 @@
     function render() {
       // Sky Gradient
       const skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-      skyGrad.addColorStop(0, '#0f172a');
-      skyGrad.addColorStop(1, '#1e293b');
+      skyGrad.addColorStop(0, '#07111f');
+      skyGrad.addColorStop(0.58, '#123452');
+      skyGrad.addColorStop(1, '#1e526b');
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, canvas.width, GROUND_Y);
 
-      // Stars / Sun
-      ctx.fillStyle = '#fef08a';
+      // Moon glow and distant skyline
+      const moonGlow = ctx.createRadialGradient(canvas.width - 120, 70, 8, canvas.width - 120, 70, 72);
+      moonGlow.addColorStop(0, 'rgba(165, 243, 252, 0.35)');
+      moonGlow.addColorStop(1, 'rgba(165, 243, 252, 0)');
+      ctx.fillStyle = moonGlow;
+      ctx.fillRect(canvas.width - 195, 0, 150, 145);
+      ctx.fillStyle = '#cffafe';
       ctx.beginPath();
-      ctx.arc(canvas.width - 120, 70, 24, 0, Math.PI * 2);
+      ctx.arc(canvas.width - 120, 70, 22, 0, Math.PI * 2);
       ctx.fill();
 
+      // Layered city blocks with warm window lights.
+      const cityOffset = (distance * 0.28) % 96;
+      for (let x = -96 - cityOffset, index = 0; x < canvas.width + 96; x += 96, index++) {
+        const width = 58 + (index % 3) * 12;
+        const height = 58 + (index % 4) * 18;
+        const top = GROUND_Y - height;
+        ctx.fillStyle = index % 2 ? 'rgba(8, 36, 58, 0.92)' : 'rgba(9, 45, 70, 0.92)';
+        ctx.fillRect(x, top, width, height);
+        ctx.fillStyle = 'rgba(103, 232, 249, 0.18)';
+        ctx.fillRect(x + 8, top + 8, width - 16, 3);
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.7)';
+        for (let windowY = top + 18; windowY < GROUND_Y - 12; windowY += 17) {
+          for (let windowX = x + 10; windowX < x + width - 8; windowX += 16) {
+            if ((windowX + windowY + index) % 3 !== 0) {
+              ctx.fillRect(windowX, windowY, 5, 7);
+            }
+          }
+        }
+        if (index % 3 === 0) {
+          ctx.strokeStyle = 'rgba(103, 232, 249, 0.65)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x + width / 2, top);
+          ctx.lineTo(x + width / 2, top - 18);
+          ctx.stroke();
+        }
+      }
+
       // Clouds
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.fillStyle = 'rgba(165, 243, 252, 0.12)';
       clouds.forEach(c => {
         ctx.beginPath();
         ctx.roundRect(c.x, c.y, c.width, 24, 12);
         ctx.fill();
       });
 
-      // Ground Surface
-      ctx.fillStyle = '#d97706';
+      // Road surface and raised curb.
+      const groundGrad = ctx.createLinearGradient(0, GROUND_Y, 0, canvas.height);
+      groundGrad.addColorStop(0, '#334155');
+      groundGrad.addColorStop(1, '#111827');
+      ctx.fillStyle = groundGrad;
       ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
 
-      // Ground Edge Line
-      ctx.strokeStyle = '#b45309';
-      ctx.lineWidth = 4;
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(0, GROUND_Y, canvas.width, 7);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, GROUND_Y + 7, canvas.width, 3);
+
+      // Road lane markers create forward motion beneath the runner.
+      ctx.strokeStyle = 'rgba(226, 232, 240, 0.72)';
+      ctx.lineWidth = 3;
+      const roadOffset = (distance * 1.0) % 96;
+      for (let x = -70 - roadOffset; x < canvas.width + 70; x += 96) {
+        ctx.beginPath();
+        ctx.moveTo(x, GROUND_Y + 38);
+        ctx.lineTo(x + 32, GROUND_Y + 38);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.28)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, GROUND_Y + 74);
+      ctx.lineTo(canvas.width, GROUND_Y + 74);
+      ctx.stroke();
+
+      // Neon curb edge.
+      ctx.strokeStyle = '#67e8f9';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#22d3ee';
+      ctx.shadowBlur = 10;
       ctx.beginPath();
       ctx.moveTo(0, GROUND_Y);
       ctx.lineTo(canvas.width, GROUND_Y);
       ctx.stroke();
+      ctx.shadowBlur = 0;
 
-      // Gravel Texture
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2;
-      for (let x = -40 - groundOffset; x < canvas.width + 40; x += 35) {
+      // Sidewalk seams.
+      ctx.strokeStyle = 'rgba(203, 213, 225, 0.22)';
+      ctx.lineWidth = 1;
+      const sidewalkOffset = (distance * 0.5) % 48;
+      for (let x = -40 - sidewalkOffset; x < canvas.width + 40; x += 48) {
         ctx.beginPath();
-        ctx.moveTo(x, GROUND_Y + 14);
-        ctx.lineTo(x + 10, GROUND_Y + 14);
+        ctx.moveTo(x, GROUND_Y + 12);
+        ctx.lineTo(x + 14, GROUND_Y + 12);
         ctx.stroke();
+      }
+
+      // Repeating streetlights frame the road without covering the play lane.
+      const lampOffset = (distance * 0.65) % 180;
+      for (let x = -120 - lampOffset; x < canvas.width + 180; x += 180) {
+        const lampGlow = ctx.createRadialGradient(x + 15, GROUND_Y - 84, 2, x + 15, GROUND_Y - 84, 92);
+        lampGlow.addColorStop(0, 'rgba(253, 224, 71, 0.2)');
+        lampGlow.addColorStop(0.35, 'rgba(250, 204, 21, 0.08)');
+        lampGlow.addColorStop(1, 'rgba(250, 204, 21, 0)');
+        ctx.fillStyle = lampGlow;
+        ctx.fillRect(x - 78, GROUND_Y - 110, 186, 120);
+
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x, GROUND_Y + 2);
+        ctx.lineTo(x, GROUND_Y - 74);
+        ctx.quadraticCurveTo(x, GROUND_Y - 86, x + 12, GROUND_Y - 88);
+        ctx.stroke();
+        ctx.fillStyle = '#fde68a';
+        ctx.shadowColor = '#facc15';
+        ctx.shadowBlur = 24;
+        ctx.beginPath();
+        ctx.arc(x + 15, GROUND_Y - 87, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
       // Dust Particles
@@ -476,14 +644,65 @@
         ctx.globalAlpha = 1;
       });
 
-      // Cactus obstacles
+      // Park and street-food obstacles use fixed geometry to stay visually stable.
       obstacles.forEach(o => {
-        ctx.fillStyle = '#22c55e';
-        ctx.beginPath();
-        ctx.roundRect(o.x + 12, o.y, 24, o.height, 8);
-        ctx.roundRect(o.x, o.y + 22, 16, 12, 6);
-        ctx.roundRect(o.x + 32, o.y + 36, 16, 12, 6);
-        ctx.fill();
+        ctx.save();
+        ctx.shadowColor = o.type === 'shop' ? '#fb7185' : o.type === 'bin' ? '#67e8f9' : '#facc15';
+        ctx.shadowBlur = 16;
+        if (o.type === 'chair') {
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(o.x + 8, o.y + 8);
+          ctx.lineTo(o.x + 48, o.y + 8);
+          ctx.lineTo(o.x + 44, GROUND_Y - 3);
+          ctx.moveTo(o.x + 12, o.y + 8);
+          ctx.lineTo(o.x + 16, GROUND_Y - 3);
+          ctx.moveTo(o.x + 11, o.y + 20);
+          ctx.lineTo(o.x + 44, o.y + 20);
+          ctx.stroke();
+          ctx.fillStyle = '#92400e';
+          ctx.fillRect(o.x + 7, o.y + 5, 43, 8);
+        } else if (o.type === 'bin') {
+          ctx.fillStyle = '#0e7490';
+          ctx.beginPath();
+          ctx.roundRect(o.x + 5, o.y + 7, 28, o.height - 7, 6);
+          ctx.fill();
+          ctx.fillStyle = '#164e63';
+          ctx.fillRect(o.x + 2, o.y + 3, 34, 7);
+          ctx.fillStyle = '#a5f3fc';
+          ctx.fillRect(o.x + 14, o.y + 16, 9, 3);
+          ctx.fillRect(o.x + 14, o.y + 23, 9, 3);
+        } else {
+          ctx.fillStyle = '#be123c';
+          ctx.fillRect(o.x + 4, o.y + 13, 64, 32);
+          ctx.fillStyle = '#fda4af';
+          ctx.fillRect(o.x, o.y + 7, 72, 10);
+          ctx.fillStyle = '#fef3c7';
+          ctx.beginPath();
+          ctx.moveTo(o.x + 2, o.y + 7);
+          ctx.lineTo(o.x + 12, o.y - 1);
+          ctx.lineTo(o.x + 24, o.y + 7);
+          ctx.lineTo(o.x + 36, o.y - 1);
+          ctx.lineTo(o.x + 48, o.y + 7);
+          ctx.lineTo(o.x + 60, o.y - 1);
+          ctx.lineTo(o.x + 70, o.y + 7);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(o.x + 10, o.y + 22, 15, 13);
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath();
+          ctx.arc(o.x + 48, o.y + 28, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = '800 7px Outfit, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('SNACKS', o.x + 36, o.y + 42);
+        }
+        ctx.shadowBlur = 0;
+        ctx.restore();
       });
 
       // Side-facing Portugal footballer player

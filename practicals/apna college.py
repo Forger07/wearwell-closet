@@ -76,7 +76,12 @@
 # str =  "apna college"
 # print(str[5:12])
 
-#slicing (negative indexing)
-str = "apple"
-print(str[-5:-2])
+# slicing (negative indexing)
+# word = "apple"
+# print(word[-5:-2])
+
+
+
+
+
 

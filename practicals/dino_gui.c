@@ -14,10 +14,16 @@
 #define MAX_CLOUDS 6
 #define MAX_OBSTACLES 4
 
-typedef enum { STATE_PLAYING, STATE_PAUSED, STATE_GAMEOVER } GameState;
+typedef enum
+{
+  STATE_PLAYING,
+  STATE_PAUSED,
+  STATE_GAMEOVER
+} GameState;
 
 // Dust Particle
-typedef struct {
+typedef struct
+{
   float x, y;
   float vx, vy;
   float alpha;
@@ -26,14 +32,16 @@ typedef struct {
 } Particle;
 
 // Cloud
-typedef struct {
+typedef struct
+{
   float x, y;
   float speed;
   float width;
 } Cloud;
 
 // Obstacle
-typedef struct {
+typedef struct
+{
   float x, y;
   float width, height;
   int type; // 0 = Small Cactus, 1 = Large Cactus, 2 = Pterodactyl
@@ -60,10 +68,14 @@ Cloud g_clouds[MAX_CLOUDS];
 Particle g_particles[MAX_PARTICLES];
 float g_groundOffset = 0.0f;
 
-void SpawnDust(float x, float y, int count) {
-  for (int k = 0; k < count; k++) {
-    for (int p = 0; p < MAX_PARTICLES; p++) {
-      if (!g_particles[p].active) {
+void SpawnDust(float x, float y, int count)
+{
+  for (int k = 0; k < count; k++)
+  {
+    for (int p = 0; p < MAX_PARTICLES; p++)
+    {
+      if (!g_particles[p].active)
+      {
         g_particles[p].active = true;
         g_particles[p].x = x + (rand() % 12 - 6);
         g_particles[p].y = y + (rand() % 6 - 3);
@@ -77,7 +89,8 @@ void SpawnDust(float x, float y, int count) {
   }
 }
 
-void InitGame() {
+void InitGame()
+{
   g_state = STATE_PLAYING;
   g_score = 0;
   g_distance = 0;
@@ -93,7 +106,8 @@ void InitGame() {
     g_particles[p].active = false;
 
   // Initialize Clouds
-  for (int i = 0; i < MAX_CLOUDS; i++) {
+  for (int i = 0; i < MAX_CLOUDS; i++)
+  {
     g_clouds[i].x = (float)(rand() % WINDOW_WIDTH);
     g_clouds[i].y = (float)(40 + rand() % 120);
     g_clouds[i].speed = 0.8f + (rand() % 10) / 10.0f;
@@ -101,7 +115,8 @@ void InitGame() {
   }
 }
 
-void UpdatePhysics() {
+void UpdatePhysics()
+{
   if (g_state != STATE_PLAYING)
     return;
 
@@ -120,8 +135,10 @@ void UpdatePhysics() {
   g_dinoVY += 0.95f; // Gravity
   g_dinoY += g_dinoVY;
 
-  if (g_dinoY >= GROUND_Y - 50) {
-    if (!g_isGrounded) {
+  if (g_dinoY >= GROUND_Y - 50)
+  {
+    if (!g_isGrounded)
+    {
       // Just landed! Spawn landing dust
       SpawnDust(90, GROUND_Y - 5, 8);
     }
@@ -131,26 +148,32 @@ void UpdatePhysics() {
   }
 
   // Spawn running dust
-  if (g_isGrounded && g_animFrame % 4 == 0) {
+  if (g_isGrounded && g_animFrame % 4 == 0)
+  {
     SpawnDust(80, GROUND_Y - 8, 2);
   }
 
   // Move & Update Dust Particles
-  for (int p = 0; p < MAX_PARTICLES; p++) {
-    if (g_particles[p].active) {
+  for (int p = 0; p < MAX_PARTICLES; p++)
+  {
+    if (g_particles[p].active)
+    {
       g_particles[p].x += g_particles[p].vx;
       g_particles[p].y += g_particles[p].vy;
       g_particles[p].alpha -= 0.04f;
-      if (g_particles[p].alpha <= 0.0f) {
+      if (g_particles[p].alpha <= 0.0f)
+      {
         g_particles[p].active = false;
       }
     }
   }
 
   // Move Clouds
-  for (int i = 0; i < MAX_CLOUDS; i++) {
+  for (int i = 0; i < MAX_CLOUDS; i++)
+  {
     g_clouds[i].x -= g_clouds[i].speed;
-    if (g_clouds[i].x < -100) {
+    if (g_clouds[i].x < -100)
+    {
       g_clouds[i].x = WINDOW_WIDTH + (rand() % 100);
       g_clouds[i].y = (float)(40 + rand() % 120);
     }
@@ -158,28 +181,38 @@ void UpdatePhysics() {
 
   // Obstacle Spawning
   bool canSpawn = true;
-  for (int j = 0; j < MAX_OBSTACLES; j++) {
-    if (g_obstacles[j].active && g_obstacles[j].x > (WINDOW_WIDTH - 320)) {
+  for (int j = 0; j < MAX_OBSTACLES; j++)
+  {
+    if (g_obstacles[j].active && g_obstacles[j].x > (WINDOW_WIDTH - 320))
+    {
       canSpawn = false;
       break;
     }
   }
 
-  if (canSpawn && (rand() % 35 == 0)) {
-    for (int i = 0; i < MAX_OBSTACLES; i++) {
-      if (!g_obstacles[i].active) {
+  if (canSpawn && (rand() % 35 == 0))
+  {
+    for (int i = 0; i < MAX_OBSTACLES; i++)
+    {
+      if (!g_obstacles[i].active)
+      {
         g_obstacles[i].active = true;
         g_obstacles[i].x = (float)WINDOW_WIDTH;
         g_obstacles[i].type = rand() % 3; // 0=Small, 1=Large, 2=Pterodactyl
-        if (g_obstacles[i].type == 0) {
+        if (g_obstacles[i].type == 0)
+        {
           g_obstacles[i].width = 30;
           g_obstacles[i].height = 45;
           g_obstacles[i].y = GROUND_Y - 45;
-        } else if (g_obstacles[i].type == 1) {
+        }
+        else if (g_obstacles[i].type == 1)
+        {
           g_obstacles[i].width = 48;
           g_obstacles[i].height = 65;
           g_obstacles[i].y = GROUND_Y - 65;
-        } else {
+        }
+        else
+        {
           g_obstacles[i].width = 48;
           g_obstacles[i].height = 35;
           g_obstacles[i].y =
@@ -196,10 +229,13 @@ void UpdatePhysics() {
   float dinoH = g_isDucking ? 28 : 45;
   float curDinoY = g_dinoY + (g_isDucking ? 22 : 5);
 
-  for (int i = 0; i < MAX_OBSTACLES; i++) {
-    if (g_obstacles[i].active) {
+  for (int i = 0; i < MAX_OBSTACLES; i++)
+  {
+    if (g_obstacles[i].active)
+    {
       g_obstacles[i].x -= g_gameSpeed;
-      if (g_obstacles[i].x < -80) {
+      if (g_obstacles[i].x < -80)
+      {
         g_obstacles[i].active = false;
       }
 
@@ -210,7 +246,8 @@ void UpdatePhysics() {
       float oh = g_obstacles[i].height - 8;
 
       if (dinoX < ox + ow && dinoX + dinoW > ox && curDinoY < oy + oh &&
-          curDinoY + dinoH > oy) {
+          curDinoY + dinoH > oy)
+      {
         g_state = STATE_GAMEOVER;
         SpawnDust(dinoX + 20, curDinoY + 20, 25);
       }
@@ -220,13 +257,15 @@ void UpdatePhysics() {
 
 // Drawing Helper Functions
 void DrawDinoSprite(HDC hdc, float x, float y, bool isDucking, int animFrame,
-                    bool isGrounded) {
+                    bool isGrounded)
+{
   HBRUSH bodyBrush = CreateSolidBrush(RGB(55, 65, 81)); // Modern Slate Gray
   HBRUSH oldBrush = (HBRUSH)SelectObject(hdc, bodyBrush);
   HPEN nullPen = (HPEN)GetStockObject(NULL_PEN);
   HPEN oldPen = (HPEN)SelectObject(hdc, nullPen);
 
-  if (isDucking && isGrounded) {
+  if (isDucking && isGrounded)
+  {
     // Ducking Dino
     RoundRect(hdc, (int)x, (int)y + 20, (int)x + 58, (int)y + 45, 12, 12);
     RoundRect(hdc, (int)x + 42, (int)y + 15, (int)x + 68, (int)y + 34, 8, 8);
@@ -239,14 +278,19 @@ void DrawDinoSprite(HDC hdc, float x, float y, bool isDucking, int animFrame,
 
     // Running Legs
     SelectObject(hdc, bodyBrush);
-    if ((animFrame / 3) % 2 == 0) {
+    if ((animFrame / 3) % 2 == 0)
+    {
       Rectangle(hdc, (int)x + 14, (int)y + 42, (int)x + 22, (int)y + 50);
       Rectangle(hdc, (int)x + 38, (int)y + 42, (int)x + 46, (int)y + 47);
-    } else {
+    }
+    else
+    {
       Rectangle(hdc, (int)x + 14, (int)y + 42, (int)x + 22, (int)y + 47);
       Rectangle(hdc, (int)x + 38, (int)y + 42, (int)x + 46, (int)y + 50);
     }
-  } else {
+  }
+  else
+  {
     // Standing / Jumping Dino
     // Body
     RoundRect(hdc, (int)x + 10, (int)y + 14, (int)x + 42, (int)y + 44, 14, 14);
@@ -272,16 +316,22 @@ void DrawDinoSprite(HDC hdc, float x, float y, bool isDucking, int animFrame,
     Polygon(hdc, tailPts, 3);
 
     // Legs
-    if (!isGrounded) {
+    if (!isGrounded)
+    {
       // Legs in air
       Rectangle(hdc, (int)x + 14, (int)y + 42, (int)x + 23, (int)y + 49);
       Rectangle(hdc, (int)x + 30, (int)y + 42, (int)x + 39, (int)y + 49);
-    } else {
+    }
+    else
+    {
       // Running leg animation
-      if ((animFrame / 3) % 2 == 0) {
+      if ((animFrame / 3) % 2 == 0)
+      {
         Rectangle(hdc, (int)x + 14, (int)y + 42, (int)x + 23, (int)y + 52);
         Rectangle(hdc, (int)x + 30, (int)y + 42, (int)x + 39, (int)y + 46);
-      } else {
+      }
+      else
+      {
         Rectangle(hdc, (int)x + 14, (int)y + 42, (int)x + 23, (int)y + 46);
         Rectangle(hdc, (int)x + 30, (int)y + 42, (int)x + 39, (int)y + 52);
       }
@@ -293,7 +343,8 @@ void DrawDinoSprite(HDC hdc, float x, float y, bool isDucking, int animFrame,
   DeleteObject(bodyBrush);
 }
 
-void DrawCactusSprite(HDC hdc, float x, float y, float w, float h, int type) {
+void DrawCactusSprite(HDC hdc, float x, float y, float w, float h, int type)
+{
   HBRUSH cactusBrush = CreateSolidBrush(RGB(34, 139, 34)); // Emerald Green
   HBRUSH darkBrush = CreateSolidBrush(RGB(16, 95, 30));
   HBRUSH oldBrush = (HBRUSH)SelectObject(hdc, cactusBrush);
@@ -328,7 +379,8 @@ void DrawCactusSprite(HDC hdc, float x, float y, float w, float h, int type) {
   DeleteObject(darkBrush);
 }
 
-void DrawPterodactylSprite(HDC hdc, float x, float y, int animFrame) {
+void DrawPterodactylSprite(HDC hdc, float x, float y, int animFrame)
+{
   HBRUSH birdBrush = CreateSolidBrush(RGB(180, 83, 9)); // Crimson Brown
   HBRUSH oldBrush = (HBRUSH)SelectObject(hdc, birdBrush);
   HPEN nullPen = (HPEN)GetStockObject(NULL_PEN);
@@ -345,12 +397,15 @@ void DrawPterodactylSprite(HDC hdc, float x, float y, int animFrame) {
   Polygon(hdc, headPts, 3);
 
   // Wing flapping
-  if ((animFrame / 5) % 2 == 0) {
+  if ((animFrame / 5) % 2 == 0)
+  {
     // Wings Up
     POINT wing[3] = {
         {ix + 15, iy + 12}, {ix + 25, iy - 16}, {ix + 32, iy + 12}};
     Polygon(hdc, wing, 3);
-  } else {
+  }
+  else
+  {
     // Wings Down
     POINT wing[3] = {
         {ix + 15, iy + 18}, {ix + 25, iy + 38}, {ix + 32, iy + 18}};
@@ -362,7 +417,8 @@ void DrawPterodactylSprite(HDC hdc, float x, float y, int animFrame) {
   DeleteObject(birdBrush);
 }
 
-void RenderWindow(HDC hdcBuffer) {
+void RenderWindow(HDC hdcBuffer)
+{
   // 1. Sky Gradient Background (Transitions from Day Blue to Dusk/Night
   // depending on score)
   RECT rcSky = {0, 0, WINDOW_WIDTH, GROUND_Y};
@@ -382,7 +438,8 @@ void RenderWindow(HDC hdcBuffer) {
   // 3. Draw Fluffy Clouds
   HBRUSH cloudBrush = CreateSolidBrush(RGB(255, 255, 255));
   SelectObject(hdcBuffer, cloudBrush);
-  for (int i = 0; i < MAX_CLOUDS; i++) {
+  for (int i = 0; i < MAX_CLOUDS; i++)
+  {
     int cx = (int)g_clouds[i].x;
     int cy = (int)g_clouds[i].y;
     int cw = (int)g_clouds[i].width;
@@ -407,7 +464,8 @@ void RenderWindow(HDC hdcBuffer) {
   // Scrolling Gravel / Pebbles Texture
   HPEN pebblePen = CreatePen(PS_SOLID, 2, RGB(251, 191, 36));
   SelectObject(hdcBuffer, pebblePen);
-  for (int x = -40 + (int)(-g_groundOffset); x < WINDOW_WIDTH + 40; x += 35) {
+  for (int x = -40 + (int)(-g_groundOffset); x < WINDOW_WIDTH + 40; x += 35)
+  {
     MoveToEx(hdcBuffer, x, GROUND_Y + 12, NULL);
     LineTo(hdcBuffer, x + 10, GROUND_Y + 12);
 
@@ -417,8 +475,10 @@ void RenderWindow(HDC hdcBuffer) {
   DeleteObject(pebblePen);
 
   // 5. Dust Particles
-  for (int p = 0; p < MAX_PARTICLES; p++) {
-    if (g_particles[p].active) {
+  for (int p = 0; p < MAX_PARTICLES; p++)
+  {
+    if (g_particles[p].active)
+    {
       HBRUSH pBrush = CreateSolidBrush(RGB(180, 150, 100));
       SelectObject(hdcBuffer, pBrush);
       int px = (int)g_particles[p].x;
@@ -430,12 +490,17 @@ void RenderWindow(HDC hdcBuffer) {
   }
 
   // 6. Draw Obstacles
-  for (int i = 0; i < MAX_OBSTACLES; i++) {
-    if (g_obstacles[i].active) {
-      if (g_obstacles[i].type == 2) {
+  for (int i = 0; i < MAX_OBSTACLES; i++)
+  {
+    if (g_obstacles[i].active)
+    {
+      if (g_obstacles[i].type == 2)
+      {
         DrawPterodactylSprite(hdcBuffer, g_obstacles[i].x, g_obstacles[i].y,
                               g_animFrame);
-      } else {
+      }
+      else
+      {
         DrawCactusSprite(hdcBuffer, g_obstacles[i].x, g_obstacles[i].y,
                          g_obstacles[i].width, g_obstacles[i].height,
                          g_obstacles[i].type);
@@ -462,7 +527,8 @@ void RenderWindow(HDC hdcBuffer) {
   DeleteObject(hFontScore);
 
   // 9. Overlay for PAUSED or GAMEOVER state
-  if (g_state == STATE_PAUSED) {
+  if (g_state == STATE_PAUSED)
+  {
     HFONT hFontMsg =
         CreateFontA(36, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
                     OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
@@ -472,7 +538,9 @@ void RenderWindow(HDC hdcBuffer) {
     TextOutA(hdcBuffer, WINDOW_WIDTH / 2 - 110, WINDOW_HEIGHT / 2 - 40,
              "PAUSED", 6);
     DeleteObject(hFontMsg);
-  } else if (g_state == STATE_GAMEOVER) {
+  }
+  else if (g_state == STATE_GAMEOVER)
+  {
     // Game Over Dialog Box
     RECT rcModal = {WINDOW_WIDTH / 2 - 180, WINDOW_HEIGHT / 2 - 80,
                     WINDOW_WIDTH / 2 + 180, WINDOW_HEIGHT / 2 + 60};
@@ -513,8 +581,10 @@ void RenderWindow(HDC hdcBuffer) {
   SelectObject(hdcBuffer, oldPen);
 }
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  switch (msg) {
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+  switch (msg)
+  {
   case WM_CREATE:
     SetTimer(hwnd, 1, 16, NULL); // ~60 FPS Timer
     InitGame();
@@ -526,38 +596,54 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     break;
 
   case WM_KEYDOWN:
-    if (wParam == VK_ESCAPE) {
+    if (wParam == VK_ESCAPE)
+    {
       PostQuitMessage(0);
-    } else if (wParam == 'P' || wParam == 'p') {
-      if (g_state != STATE_GAMEOVER) {
+    }
+    else if (wParam == 'P' || wParam == 'p')
+    {
+      if (g_state != STATE_GAMEOVER)
+      {
         g_state = (g_state == STATE_PLAYING) ? STATE_PAUSED : STATE_PLAYING;
       }
-    } else if (wParam == VK_SPACE || wParam == VK_UP || wParam == 'R' ||
-               wParam == 'r') {
-      if (g_state == STATE_GAMEOVER) {
+    }
+    else if (wParam == VK_SPACE || wParam == VK_UP || wParam == 'R' ||
+             wParam == 'r')
+    {
+      if (g_state == STATE_GAMEOVER)
+      {
         InitGame();
-      } else if (g_state == STATE_PLAYING && g_isGrounded) {
+      }
+      else if (g_state == STATE_PLAYING && g_isGrounded)
+      {
         g_dinoVY = -14.5f; // Responsive 60 FPS jump force
         g_isGrounded = false;
         SpawnDust(80, GROUND_Y - 5, 6);
       }
-    } else if (wParam == VK_DOWN) {
-      if (g_state == STATE_PLAYING && g_isGrounded) {
+    }
+    else if (wParam == VK_DOWN)
+    {
+      if (g_state == STATE_PLAYING && g_isGrounded)
+      {
         g_isDucking = true;
       }
     }
     break;
 
   case WM_KEYUP:
-    if (wParam == VK_DOWN) {
+    if (wParam == VK_DOWN)
+    {
       g_isDucking = false;
-    } else if ((wParam == VK_SPACE || wParam == VK_UP) && g_dinoVY < -4.0f) {
+    }
+    else if ((wParam == VK_SPACE || wParam == VK_UP) && g_dinoVY < -4.0f)
+    {
       // Short hop variable jump control
       g_dinoVY += 4.0f;
     }
     break;
 
-  case WM_PAINT: {
+  case WM_PAINT:
+  {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hwnd, &ps);
 
@@ -591,7 +677,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine, int nCmdShow) {
+                   LPSTR lpCmdLine, int nCmdShow)
+{
   srand((unsigned int)time(NULL));
 
   WNDCLASSEXA wc = {0};
@@ -603,7 +690,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
   wc.lpszClassName = "DinoHDGameClass";
 
-  if (!RegisterClassExA(&wc)) {
+  if (!RegisterClassExA(&wc))
+  {
     MessageBoxA(NULL, "Window Registration Failed!", "Error",
                 MB_ICONEXCLAMATION | MB_OK);
     return 0;
@@ -620,7 +708,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top,
       NULL, NULL, hInstance, NULL);
 
-  if (!hwnd) {
+  if (!hwnd)
+  {
     MessageBoxA(NULL, "Window Creation Failed!", "Error",
                 MB_ICONEXCLAMATION | MB_OK);
     return 0;
@@ -630,7 +719,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   UpdateWindow(hwnd);
 
   MSG msg;
-  while (GetMessage(&msg, NULL, 0, 0)) {
+  while (GetMessage(&msg, NULL, 0, 0))
+  {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
