@@ -6,3 +6,7 @@ node_modules/
 .env.*
 !.env.example
 *.zip
+.vscode/
+*.lnk
+desktop.ini
+practicals/
